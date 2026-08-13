@@ -99,15 +99,18 @@ router.post('/', (req: Request<Record<string, unknown>, Record<string, unknown>,
         _primDark_: theme.primDark,
         _logo_: utils.extractFilename(config.get('application.logo'))
       }
+      const renderVars: Record<string, unknown> = {
+        ...themeVars
+      }
+      if (typeof req.body.layout === 'string') {
+        renderVars.layout = req.body.layout
+      }
 
       if (req.body.layout && utils.isChallengeEnabled(challenges.lfrChallenge)) {
         const filePath: string = path.resolve(req.body.layout).toLowerCase()
         const isForbiddenFile: boolean = (filePath.includes('ftp') || filePath.includes('ctf.key') || filePath.includes('encryptionkeys'))
         if (!isForbiddenFile) {
-          res.render('dataErasureResult', {
-            ...req.body,
-            ...themeVars
-          }, (error, html) => {
+          res.render('dataErasureResult', renderVars, (error, html) => {
             if (!html || error) {
               next(new Error(error.message))
             } else {
@@ -120,10 +123,7 @@ router.post('/', (req: Request<Record<string, unknown>, Record<string, unknown>,
           next(new Error('File access not allowed'))
         }
       } else {
-        res.render('dataErasureResult', {
-          ...req.body,
-          ...themeVars
-        })
+        res.render('dataErasureResult', renderVars)
       }
     } catch (error) {
       next(error)

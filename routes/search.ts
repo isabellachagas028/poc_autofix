@@ -18,7 +18,15 @@ class ErrorWithParent extends Error {
 // vuln-code-snippet start unionSqlInjectionChallenge dbSchemaChallenge
 export function searchProducts () {
   return (req: Request, res: Response, next: NextFunction) => {
-    let criteria: any = req.query.q === 'undefined' ? '' : req.query.q ?? ''
+    const rawCriteria = req.query.q
+    let criteria: string = ''
+    if (rawCriteria === 'undefined' || rawCriteria == null) {
+      criteria = ''
+    } else if (typeof rawCriteria === 'string') {
+      criteria = rawCriteria
+    } else if (Array.isArray(rawCriteria)) {
+      criteria = typeof rawCriteria[0] === 'string' ? rawCriteria[0] : ''
+    }
     criteria = (criteria.length <= 200) ? criteria : criteria.substring(0, 200)
     models.sequelize.query(`SELECT * FROM Products WHERE ((name LIKE '%${criteria}%' OR description LIKE '%${criteria}%') AND deletedAt IS NULL) ORDER BY name`) // vuln-code-snippet vuln-line unionSqlInjectionChallenge dbSchemaChallenge
       .then(([products]: any) => {
